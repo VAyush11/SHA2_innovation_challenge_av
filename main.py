@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_session import Session
+from flask import request, jsonify
 from flask_cors import CORS
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from datetime import datetime
@@ -226,8 +227,6 @@ def consultation():
         return redirect(url_for('landing'))
     return render_template('clinician/consultation.html')
 
-# ==================== CAREGIVER ROUTES ====================
-
 @app.route('/caregiver/dashboard')
 @login_required
 def caregiver_dashboard():
@@ -314,6 +313,53 @@ def api_optimize_demo():
     results = optimize_all_patients(patients, doctors, timeslots)
     return jsonify({"results": results})
 
+# Global/session state (simple demo)
+SESSION_STATE = {
+  "scores": [],
+  "threshold": 30.0,
+  "cooldown_until": 0
+}
+
+@app.route("/api/session/start", methods=["POST"])
+def api_session_start():
+    data = request.get_json(force=True) or {}
+    SESSION_STATE["scores"] = []
+    SESSION_STATE["threshold"] = float(data.get("threshold", 30.0))
+    SESSION_STATE["cooldown_until"] = 0
+    return jsonify({"ok": True, "threshold": SESSION_STATE["threshold"]})
+
+@app.route("/api/live_feedback", methods=["POST"])
+def api_live_feedback():
+    """
+    Input: { "frame_b64": "data:image/jpeg;base64,...." }
+    Output: score + form status + feedback list
+    """
+    data = request.get_json(force=True)
+    frame_b64 = data["frame_b64"]
+
+    # 1) decode frame -> np array (BGR)
+    frame = decode_dataurl_to_bgr(frame_b64)
+
+    # 2) extract pose -> (100,100) (or your expected shape)
+    X = pose_to_kimore_like_features(frame)   # your function
+
+    # 3) model predict -> score in 0..50
+    score = float(model_predict_score(X))     # your function
+    SESSION_STATE["scores"].append(score)
+
+    # 4) form status
+    status = "CORRECT" if score >= SESSION_STATE["threshold"] else "WRONG"
+
+    # 5) LLM feedback only if wrong (and optionally cooldown)
+    feedback = []
+    if status == "WRONG":
+        feedback = get_llm_feedback(frame)  # returns list[str]
+
+    return jsonify({
+        "frame_score": round(score, 2),
+        "form_status": status,
+        "llm_feedback": feedback
+    })
 
 if __name__ == '__main__':
     with app.app_context():
