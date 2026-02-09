@@ -5,3 +5,11 @@ Flask_Login==0.6.3
 Flask_Session==0.5.0
 Flask_CORS==4.0.0
 Werkzeug==2.3.6
+numpy
+opencv-python
+mediapipe
+tensorflow
+joblib
+requests
+pyttsx3
+google-generativeai
