@@ -12,6 +12,136 @@
 {% endblock %}
 
 {% block content %}
+<style>
+    /* Form Status Styles */
+    .form-status {
+        text-align: center;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+    
+    .form-status .badge {
+        display: inline-block;
+        padding: 10px 20px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 1rem;
+        margin-bottom: 10px;
+    }
+    
+    .form-status .badge.correct {
+        background: #d4edda;
+        color: #155724;
+        border: 2px solid #28a745;
+    }
+    
+    .form-status .badge.incorrect {
+        background: #f8d7da;
+        color: #721c24;
+        border: 2px solid #dc3545;
+        animation: pulse-warning 1s infinite;
+    }
+    
+    .form-status .badge.analyzing {
+        background: #fff3cd;
+        color: #856404;
+        border: 2px solid #ffc107;
+    }
+    
+    @keyframes pulse-warning {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+    
+    .form-status .score {
+        font-size: 1.2rem;
+        color: #333;
+        font-weight: 600;
+    }
+    
+    /* Realtime Feedback List */
+    .realtime-feedback {
+        background: white;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #e0e0e0;
+    }
+    
+    .realtime-feedback h4 {
+        margin: 0 0 10px 0;
+        color: #333;
+        font-size: 0.9rem;
+    }
+    
+    .feedback-item {
+        padding: 8px 12px;
+        margin-bottom: 8px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        animation: slideIn 0.3s ease;
+    }
+    
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateX(-10px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    
+    .feedback-item.warning {
+        background: #fff3cd;
+        border-left: 3px solid #ffc107;
+        color: #856404;
+    }
+    
+    .feedback-item.error {
+        background: #f8d7da;
+        border-left: 3px solid #dc3545;
+        color: #721c24;
+    }
+    
+    .feedback-item.success {
+        background: #d4edda;
+        border-left: 3px solid #28a745;
+        color: #155724;
+    }
+    
+    .feedback-item.info {
+        background: #d1ecf1;
+        border-left: 3px solid #17a2b8;
+        color: #0c5460;
+    }
+    
+    /* Video container for webcam */
+    .video-container {
+        position: relative;
+        width: 100%;
+        background: #1a1a2e;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .video-container video {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+    
+    .video-container canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+</style>
+
 <div class="session-layout">
     <!-- Video Panel -->
     <div class="video-panel">
@@ -19,10 +149,15 @@
             <strong>Skeleton Tracking: ON</strong><br>
             <small>Pose detection active</small>
         </div>
-        <div class="video-placeholder">
+        <div class="video-container" id="videoContainer">
+            <video id="webcamVideo" autoplay playsinline muted></video>
+            <canvas id="poseCanvas"></canvas>
+        </div>
+        <div class="video-placeholder" id="videoPlaceholder">
             <div class="icon">📹</div>
-            <p>Live Webcam Feed</p>
-            <p style="font-size: 0.8rem; opacity: 0.7;">Skeleton overlay will appear on your body</p>
+            <p>Click to Start Webcam</p>
+            <button class="btn btn-primary" onclick="startWebcam()">🎥 Enable Camera</button>
+            <p style="font-size: 0.8rem; opacity: 0.7; margin-top: 10px;">Skeleton overlay will appear on your body</p>
         </div>
     </div>
     
@@ -30,52 +165,43 @@
     <div class="feedback-panel">
         <!-- Rep Counter -->
         <div class="rep-counter">
-            <div class="count">7 / 10</div>
-            <div class="label">Reps (Set 2 of 3)</div>
+            <div class="count" id="repCount">0 / 10</div>
+            <div class="label" id="setLabel">Reps (Set 1 of 3)</div>
         </div>
         
-        <!-- Form Status -->
+        <!-- Form Status Badge -->
         <div class="form-status">
-            <h4 style="margin-bottom: 10px;">Form Status</h4>
-            <div class="status-indicator correct">
-                ✓ CORRECT FORM
-            </div>
-            <!-- Alternative incorrect state -->
-            <!--
-            <div class="status-indicator incorrect">
-                ✗ FORM NEEDS ADJUSTMENT
-            </div>
-            -->
+            <div id="formStatusBadge" class="badge analyzing">⏳ ANALYZING...</div>
+            <div class="score">Score: <span id="frameScoreText">--</span> / 50</div>
         </div>
         
-        <!-- Error Messages -->
-        <div class="error-messages">
-            <h4>Real-time Feedback</h4>
-            <div class="error-item">
-                ⚠️ Keep your back straight
-            </div>
-            <div class="error-item">
-                ⚠️ Slow down the movement
-            </div>
-            <div class="error-item" style="background: #d4edda; border-left-color: #28a745;">
-                ✓ Good knee alignment
+        <!-- Real-time Feedback from ML -->
+        <div class="realtime-feedback">
+            <h4>🤖 AI Form Feedback</h4>
+            <div id="feedbackList">
+                <div class="feedback-item info">
+                    📷 Position yourself in frame to begin analysis
+                </div>
             </div>
         </div>
-        
+
         <!-- Audio Indicator -->
         <div class="audio-indicator">
             <div class="audio-icon">🔊</div>
             <div>
-                <strong>Voice Feedback: ON</strong><br>
-                <small>Audio cues are active</small>
+                <strong>Voice Feedback: <span id="audioStatus">OFF</span></strong><br>
+                <small>Click to toggle audio cues</small>
             </div>
+            <button class="btn" onclick="toggleAudio()" style="margin-left: auto; padding: 5px 10px;">
+                Toggle
+            </button>
         </div>
         
         <!-- Exercise Info -->
         <div class="card" style="padding: 15px;">
             <h4>Current Exercise</h4>
-            <p style="color: #666; margin-top: 5px;">Knee Extension</p>
-            <p style="font-size: 0.85rem; margin-top: 10px;">
+            <p style="color: #666; margin-top: 5px;" id="exerciseName">Knee Extension</p>
+            <p style="font-size: 0.85rem; margin-top: 10px;" id="exerciseTarget">
                 Target: 3 sets × 10 reps<br>
                 ROM Target: 90° flexion
             </p>
@@ -83,8 +209,8 @@
         
         <!-- Session Controls -->
         <div class="session-controls">
-            <button class="btn" style="flex: 1;">⏸️ Pause</button>
-            <button class="btn btn-danger" style="flex: 1;">⏹️ Stop Session</button>
+            <button class="btn" style="flex: 1;" onclick="togglePause()" id="pauseBtn">⏸️ Pause</button>
+            <button class="btn btn-danger" style="flex: 1;" onclick="stopSession()">⏹️ Stop Session</button>
         </div>
         
         <!-- Next Step -->
@@ -93,4 +219,181 @@
         </a>
     </div>
 </div>
+
+<script>
+    // State variables
+    let webcamStream = null;
+    let isAnalyzing = false;
+    let isPaused = false;
+    let audioEnabled = false;
+    let currentRep = 0;
+    let currentSet = 1;
+    let targetReps = 10;
+    let targetSets = 3;
+    
+    // Start webcam
+    async function startWebcam() {
+        try {
+            webcamStream = await navigator.mediaDevices.getUserMedia({
+                video: { width: 640, height: 480, facingMode: 'user' },
+                audio: false
+            });
+            
+            const video = document.getElementById('webcamVideo');
+            video.srcObject = webcamStream;
+            
+            document.getElementById('videoPlaceholder').style.display = 'none';
+            document.getElementById('videoContainer').style.display = 'block';
+            
+            // Start pose analysis loop
+            isAnalyzing = true;
+            analyzePose();
+            
+            addFeedback('success', '✓ Camera connected - Begin your exercise');
+        } catch (err) {
+            console.error('Error accessing webcam:', err);
+            addFeedback('error', '✗ Could not access camera. Please allow camera permissions.');
+        }
+    }
+    
+    // Simulated pose analysis (replace with actual ML model)
+    function analyzePose() {
+        if (!isAnalyzing || isPaused) {
+            setTimeout(analyzePose, 500);
+            return;
+        }
+        
+        // This is where you'd integrate your ML model
+        // For now, simulating random feedback
+        const formScore = Math.floor(Math.random() * 30) + 20; // 20-50
+        updateFormStatus(formScore);
+        
+        // Simulate rep counting
+        if (Math.random() > 0.9) {
+            incrementRep();
+        }
+        
+        // Continue analysis loop
+        setTimeout(analyzePose, 100); // Analyze every 100ms
+    }
+    
+    // Update form status based on ML score
+    function updateFormStatus(score) {
+        const badge = document.getElementById('formStatusBadge');
+        const scoreText = document.getElementById('frameScoreText');
+        
+        scoreText.textContent = score;
+        
+        if (score >= 40) {
+            badge.className = 'badge correct';
+            badge.textContent = '✓ CORRECT FORM';
+        } else if (score >= 25) {
+            badge.className = 'badge analyzing';
+            badge.textContent = '⚠️ ADJUST FORM';
+            // Add random feedback
+            if (Math.random() > 0.95) {
+                const feedbacks = [
+                    'Keep your back straight',
+                    'Slow down the movement',
+                    'Extend fully at the top',
+                    'Control the descent',
+                    'Keep knees aligned with toes'
+                ];
+                addFeedback('warning', '⚠️ ' + feedbacks[Math.floor(Math.random() * feedbacks.length)]);
+            }
+        } else {
+            badge.className = 'badge incorrect';
+            badge.textContent = '✗ FORM NEEDS WORK';
+            if (audioEnabled) {
+                speakFeedback('Adjust your form');
+            }
+        }
+    }
+    
+    // Add feedback item to the list
+    function addFeedback(type, message) {
+        const feedbackList = document.getElementById('feedbackList');
+        const item = document.createElement('div');
+        item.className = `feedback-item ${type}`;
+        item.textContent = message;
+        
+        // Add to top of list
+        feedbackList.insertBefore(item, feedbackList.firstChild);
+        
+        // Keep only last 10 items
+        while (feedbackList.children.length > 10) {
+            feedbackList.removeChild(feedbackList.lastChild);
+        }
+        
+        // Speak if audio enabled and it's a warning/error
+        if (audioEnabled && (type === 'warning' || type === 'error')) {
+            speakFeedback(message.replace(/^[⚠️✗✓🤖📷]+ /, ''));
+        }
+    }
+    
+    // Increment rep counter
+    function incrementRep() {
+        currentRep++;
+        if (currentRep >= targetReps) {
+            currentRep = 0;
+            currentSet++;
+            if (currentSet > targetSets) {
+                addFeedback('success', '🎉 Exercise complete! Great job!');
+                isAnalyzing = false;
+            } else {
+                addFeedback('success', `✓ Set ${currentSet - 1} complete! Starting set ${currentSet}`);
+            }
+        }
+        updateRepCounter();
+    }
+    
+    // Update rep counter display
+    function updateRepCounter() {
+        document.getElementById('repCount').textContent = `${currentRep} / ${targetReps}`;
+        document.getElementById('setLabel').textContent = `Reps (Set ${currentSet} of ${targetSets})`;
+    }
+    
+    // Toggle audio feedback
+    function toggleAudio() {
+        audioEnabled = !audioEnabled;
+        document.getElementById('audioStatus').textContent = audioEnabled ? 'ON' : 'OFF';
+        addFeedback('info', audioEnabled ? '🔊 Voice feedback enabled' : '🔇 Voice feedback disabled');
+    }
+    
+    // Text-to-speech feedback
+    function speakFeedback(text) {
+        if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+    
+    // Toggle pause
+    function togglePause() {
+        isPaused = !isPaused;
+        const btn = document.getElementById('pauseBtn');
+        btn.textContent = isPaused ? '▶️ Resume' : '⏸️ Pause';
+        addFeedback('info', isPaused ? '⏸️ Session paused' : '▶️ Session resumed');
+    }
+    
+    // Stop session
+    function stopSession() {
+        if (confirm('End this session?')) {
+            isAnalyzing = false;
+            if (webcamStream) {
+                webcamStream.getTracks().forEach(track => track.stop());
+            }
+            window.location.href = "{{ url_for('pain_checkin') }}";
+        }
+    }
+    
+    // Cleanup on page leave
+    window.addEventListener('beforeunload', () => {
+        if (webcamStream) {
+            webcamStream.getTracks().forEach(track => track.stop());
+        }
+    });
+</script>
 {% endblock %}

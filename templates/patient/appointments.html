@@ -1,0 +1,296 @@
+{% extends 'base.html' %}
+
+{% block title %}My Consultations - Home Rehab Coach{% endblock %}
+
+{% block header %}
+<header class="header">
+    <h1>📅 My Consultations</h1>
+    <nav class="nav-links">
+        <a href="{{ url_for('patient_dashboard') }}">← Dashboard</a>
+        <a href="{{ url_for('progress_history') }}">Progress</a>
+        <a href="{{ url_for('logout') }}">Logout</a>
+    </nav>
+</header>
+{% endblock %}
+
+{% block content %}
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }}" style="padding: 10px; margin-bottom: 20px; border-radius: 4px; 
+                {% if category == 'error' %}background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;
+                {% else %}background: #d4edda; color: #155724; border: 1px solid #c3e6cb;{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<div class="appointments-container">
+    <!-- Upcoming Appointments -->
+    <div class="card">
+        <div class="card-header">� Upcoming Video Consultations</div>
+        
+        {% if appointments %}
+            {% for apt in appointments %}
+            <div class="appointment-card">
+                <div class="appointment-info">
+                    <div class="appointment-date">
+                        <div class="date-day">{{ apt.appointment_date.split('-')[2] if apt.appointment_date else '' }}</div>
+                        <div class="date-month">{{ ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][apt.appointment_date.split('-')[1]|int - 1] if apt.appointment_date else '' }}</div>
+                    </div>
+                    <div class="appointment-details">
+                        <h3>{{ apt.doctor_name }}</h3>
+                        <p class="time">🕐 {{ apt.appointment_time }} ({{ apt.duration }} min)</p>
+                        {% if apt.notes %}
+                        <p class="notes">📝 {{ apt.notes }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="appointment-actions">
+                    <a href="{{ url_for('video_call', appointment_id=apt.id) }}" class="btn btn-success btn-large">
+                        🎥 Join Video Call
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">📅</div>
+                <h3>No Upcoming Appointments</h3>
+                <p>Your doctor will schedule video consultations as needed.</p>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Tips Card -->
+    <div class="card" style="margin-top: 20px;">
+        <div class="card-header">� Video Call Tips</div>
+        <div class="tips-list">
+            <div class="tip-item">
+                <span class="tip-icon">📶</span>
+                <span>Ensure you have a stable internet connection</span>
+            </div>
+            <div class="tip-item">
+                <span class="tip-icon">🎤</span>
+                <span>Test your microphone and camera before the call</span>
+            </div>
+            <div class="tip-item">
+                <span class="tip-icon">🔇</span>
+                <span>Find a quiet, private space for your consultation</span>
+            </div>
+            <div class="tip-item">
+                <span class="tip-icon">💡</span>
+                <span>Good lighting helps your doctor see you clearly</span>
+            </div>
+            <div class="tip-item">
+                <span class="tip-icon">📋</span>
+                <span>Have your questions ready beforehand</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Past Appointments -->
+    {% if past_appointments %}
+    <div class="card" style="margin-top: 20px;">
+        <div class="card-header">� Past Appointments</div>
+        <div class="past-appointments">
+            {% for apt in past_appointments %}
+            <div class="past-item">
+                <div class="past-info">
+                    <strong>{{ apt.doctor_name }}</strong>
+                    <span class="past-date">{{ apt.appointment_date }}</span>
+                </div>
+                <span class="status-badge {{ apt.status }}">
+                    {% if apt.status == 'completed' %}✓ Completed{% else %}✕ Cancelled{% endif %}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .appointments-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .appointment-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+        margin-bottom: 15px;
+        border-left: 4px solid #28a745;
+    }
+    
+    .appointment-info {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+    
+    .appointment-date {
+        text-align: center;
+        background: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .date-day {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #007bff;
+        line-height: 1;
+    }
+    
+    .date-month {
+        font-size: 0.9rem;
+        color: #666;
+        text-transform: uppercase;
+    }
+    
+    .appointment-details h3 {
+        margin: 0 0 5px 0;
+        color: #333;
+    }
+    
+    .appointment-details .time {
+        color: #666;
+        margin: 0 0 5px 0;
+    }
+    
+    .appointment-details .notes {
+        color: #888;
+        font-size: 0.9rem;
+        font-style: italic;
+        margin: 0;
+    }
+    
+    .appointment-actions {
+        flex-shrink: 0;
+    }
+    
+    .btn-large {
+        padding: 15px 30px;
+        font-size: 1.1rem;
+    }
+    
+    .btn-success {
+        background: #28a745;
+        color: white;
+    }
+    
+    .btn-success:hover {
+        background: #218838;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #666;
+    }
+    
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 15px;
+    }
+    
+    .empty-state h3 {
+        margin: 0 0 10px 0;
+        color: #333;
+    }
+    
+    .empty-state p {
+        margin: 0;
+    }
+    
+    .tips-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .tip-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 6px;
+    }
+    
+    .tip-icon {
+        font-size: 1.3rem;
+    }
+    
+    .past-appointments {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .past-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .past-item:last-child {
+        border-bottom: none;
+    }
+    
+    .past-info {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+    
+    .past-date {
+        color: #666;
+        font-size: 0.85rem;
+    }
+    
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .status-badge.completed {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .status-badge.cancelled {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    @media (max-width: 600px) {
+        .appointment-card {
+            flex-direction: column;
+            gap: 15px;
+            text-align: center;
+        }
+        
+        .appointment-info {
+            flex-direction: column;
+        }
+        
+        .btn-large {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - Home Rehab Coach{% endblock %}
+
+{% block content %}
+<div class="login-page">
+    <h1>🔐 Login</h1>
+    <p class="subtitle">Welcome back to Home Rehab Coach</p>
+    
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div style="max-width: 400px; margin: 0 auto 20px;">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}" style="padding: 10px; margin-bottom: 10px; border-radius: 4px; 
+                    {% if category == 'error' %}background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;
+                    {% else %}background: #d4edda; color: #155724; border: 1px solid #c3e6cb;{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    
+    <div class="login-box">
+        <h2>Sign In</h2>
+        
+        <form method="POST" action="{{ url_for('login') }}">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" required 
+                       placeholder="Enter your email" class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required 
+                       placeholder="Enter your password" class="form-control">
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-large" style="width: 100%;">
+                Login
+            </button>
+        </form>
+        
+        <div style="text-align: center; margin-top: 20px;">
+            <p style="color: #666;">Don't have an account?</p>
+            <a href="{{ url_for('signup') }}" class="btn" style="margin-top: 10px;">
+                📝 Create New Account
+            </a>
+        </div>
+        
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="{{ url_for('landing') }}" style="color: #666;">← Back to Home</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

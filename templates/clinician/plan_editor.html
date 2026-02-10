@@ -13,15 +13,28 @@
 {% endblock %}
 
 {% block content %}
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }}" style="padding: 10px; margin-bottom: 20px; border-radius: 4px; 
+                {% if category == 'error' %}background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;
+                {% else %}background: #d4edda; color: #155724; border: 1px solid #c3e6cb;{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
 <!-- Patient Selection -->
 <div class="card">
     <div class="card-header">Select Patient</div>
     <div class="form-group" style="margin-bottom: 0;">
-        <select class="form-control">
-            <option>John Smith (PT-001) - Knee Replacement</option>
-            <option>Maria Garcia (PT-002) - Hip Surgery</option>
-            <option>Robert Johnson (PT-003) - ACL Reconstruction</option>
-            <option>Emily Chen (PT-004) - Shoulder Rehab</option>
+        <select id="patientSelect" class="form-control" onchange="loadPatientPlan()">
+            <option value="">-- Select a Patient --</option>
+            {% for patient in patients %}
+            <option value="{{ patient.id }}">{{ patient.name }} - {{ patient.condition or 'General Rehab' }}</option>
+            {% endfor %}
         </select>
     </div>
 </div>
@@ -30,161 +43,236 @@
     <!-- Exercise Library -->
     <div class="exercise-library">
         <h3 style="margin-bottom: 15px;">Exercise Library</h3>
-        <input type="text" class="form-control" placeholder="Search exercises..." style="margin-bottom: 15px;">
+        <input type="text" id="exerciseSearch" class="form-control" placeholder="Search exercises..." style="margin-bottom: 15px;" onkeyup="filterExercises()">
         
         <div style="margin-bottom: 15px;">
             <strong>Category:</strong>
-            <select class="form-control" style="margin-top: 5px;">
-                <option>All Categories</option>
-                <option>Knee</option>
-                <option>Hip</option>
-                <option>Shoulder</option>
-                <option>Back</option>
-                <option>Ankle</option>
+            <select id="categoryFilter" class="form-control" style="margin-top: 5px;" onchange="filterExercises()">
+                <option value="">All Categories</option>
+                <option value="Knee">Knee</option>
+                <option value="Hip">Hip</option>
+                <option value="Shoulder">Shoulder</option>
+                <option value="Back">Back</option>
+                <option value="Ankle">Ankle</option>
+                <option value="General">General</option>
             </select>
         </div>
         
-        <div class="exercise-item selected">
-            <strong>Knee Extension</strong>
-            <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">Seated leg raises to strengthen quadriceps</p>
-        </div>
-        <div class="exercise-item">
-            <strong>Hip Flexor Stretch</strong>
-            <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">Stretching hip flexors for improved mobility</p>
-        </div>
-        <div class="exercise-item">
-            <strong>Quad Strengthening</strong>
-            <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">Resistance-based quadriceps exercises</p>
-        </div>
-        <div class="exercise-item">
-            <strong>Hamstring Curl</strong>
-            <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">Lying hamstring curls for balance</p>
-        </div>
-        <div class="exercise-item">
-            <strong>Calf Raises</strong>
-            <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">Standing calf raises for lower leg strength</p>
-        </div>
-        <div class="exercise-item">
-            <strong>Wall Slides</strong>
-            <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">Back against wall squatting motion</p>
+        <div id="exerciseList">
+            {% for exercise in exercises %}
+            <div class="exercise-item" data-id="{{ exercise.id }}" data-category="{{ exercise.category }}" onclick="selectExercise(this, {{ exercise.id }}, '{{ exercise.name }}')">
+                <strong>{{ exercise.name }}</strong>
+                <span style="font-size: 0.75rem; background: #e3f2fd; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">{{ exercise.category }}</span>
+                <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">{{ exercise.description or 'Rehabilitation exercise' }}</p>
+            </div>
+            {% else %}
+            <div style="text-align: center; color: #666; padding: 20px;">
+                <p>No exercises found in the library.</p>
+                <p style="font-size: 0.85rem;">Contact admin to add exercises.</p>
+            </div>
+            {% endfor %}
         </div>
     </div>
     
     <!-- Plan Configuration -->
     <div class="plan-config">
-        <h3 style="margin-bottom: 20px;">Current Rehab Plan</h3>
+        <h3 style="margin-bottom: 20px;">Add Exercise to Plan</h3>
         
-        <!-- Exercise 1 Configuration -->
-        <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: start;">
-                <div>
-                    <h4>1. Knee Extension</h4>
-                    <p style="color: #666; font-size: 0.9rem;">Added to plan</p>
-                </div>
-                <button class="btn btn-danger" style="padding: 5px 10px; font-size: 0.8rem;">Remove</button>
-            </div>
+        <form method="POST" action="{{ url_for('plan_editor') }}" id="addExerciseForm">
+            <input type="hidden" name="patient_id" id="selectedPatientId">
+            <input type="hidden" name="exercise_id" id="selectedExerciseId">
             
-            <div class="config-row" style="margin-top: 15px;">
-                <div class="form-group">
-                    <label>Sets</label>
-                    <input type="number" class="form-control" value="3" min="1" max="10">
+            <div class="card">
+                <div style="margin-bottom: 15px;">
+                    <strong id="selectedExerciseName">Select an exercise from the library</strong>
                 </div>
-                <div class="form-group">
-                    <label>Reps per Set</label>
-                    <input type="number" class="form-control" value="10" min="1" max="50">
+                
+                <div class="config-row" style="margin-top: 15px;">
+                    <div class="form-group">
+                        <label>Sets</label>
+                        <input type="number" name="sets" class="form-control" value="3" min="1" max="10">
+                    </div>
+                    <div class="form-group">
+                        <label>Reps per Set</label>
+                        <input type="number" name="reps" class="form-control" value="10" min="1" max="50">
+                    </div>
+                    <div class="form-group">
+                        <label>Frequency</label>
+                        <select name="frequency" class="form-control">
+                            <option value="Daily">Daily</option>
+                            <option value="3x per week" selected>3x per week</option>
+                            <option value="2x per week">2x per week</option>
+                            <option value="Weekly">Weekly</option>
+                        </select>
+                    </div>
                 </div>
+                
                 <div class="form-group">
-                    <label>Frequency</label>
-                    <select class="form-control">
-                        <option>Daily</option>
-                        <option selected>3x per week</option>
-                        <option>2x per week</option>
-                        <option>Weekly</option>
-                    </select>
+                    <label>Special Instructions</label>
+                    <textarea name="instructions" class="form-control" rows="2" placeholder="Add any specific instructions for this exercise..."></textarea>
                 </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%;">+ Add Exercise to Plan</button>
             </div>
-            
-            <div class="config-row">
-                <div class="form-group">
-                    <label>ROM Target (degrees)</label>
-                    <input type="number" class="form-control" value="90" min="0" max="180">
-                </div>
-                <div class="form-group">
-                    <label>Hold Time (sec)</label>
-                    <input type="number" class="form-control" value="5" min="0" max="60">
-                </div>
-                <div class="form-group">
-                    <label>Rest Between Sets (sec)</label>
-                    <input type="number" class="form-control" value="30" min="0" max="300">
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label>Special Instructions</label>
-                <textarea class="form-control" rows="2" placeholder="Add any specific instructions for this exercise...">Keep back straight. Stop if pain exceeds 4/10.</textarea>
-            </div>
-        </div>
+        </form>
         
-        <!-- Exercise 2 Configuration -->
-        <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: start;">
-                <div>
-                    <h4>2. Hip Flexor Stretch</h4>
-                    <p style="color: #666; font-size: 0.9rem;">Added to plan</p>
+        <!-- Current Plan -->
+        <div class="card" style="margin-top: 20px;">
+            <div class="card-header">Current Assigned Workouts</div>
+            <div id="currentWorkouts">
+                {% if workouts %}
+                    {% for workout in workouts %}
+                    <div style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>{{ workout.exercise_name }}</strong>
+                            <p style="font-size: 0.85rem; color: #666; margin: 0;">
+                                {{ workout.sets }} sets × {{ workout.reps }} reps | {{ workout.frequency }}
+                            </p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div style="text-align: center; color: #666; padding: 20px;">
+                    <p>Select a patient to view their workout plan.</p>
                 </div>
-                <button class="btn btn-danger" style="padding: 5px 10px; font-size: 0.8rem;">Remove</button>
+                {% endif %}
             </div>
-            
-            <div class="config-row" style="margin-top: 15px;">
-                <div class="form-group">
-                    <label>Sets</label>
-                    <input type="number" class="form-control" value="2" min="1" max="10">
-                </div>
-                <div class="form-group">
-                    <label>Duration (sec)</label>
-                    <input type="number" class="form-control" value="30" min="1" max="120">
-                </div>
-                <div class="form-group">
-                    <label>Frequency</label>
-                    <select class="form-control">
-                        <option selected>Daily</option>
-                        <option>3x per week</option>
-                        <option>2x per week</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Add Exercise Button -->
-        <button class="btn" style="width: 100%; margin-top: 10px;">+ Add Selected Exercise to Plan</button>
-        
-        <!-- Plan Summary -->
-        <div class="card" style="margin-top: 20px; background: #f5f5f5;">
-            <div class="card-header">Plan Summary</div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span>Total Exercises:</span>
-                <strong>2</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span>Est. Session Duration:</span>
-                <strong>25 minutes</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span>Sessions per Week:</span>
-                <strong>5</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between;">
-                <span>Plan Start Date:</span>
-                <strong>Jan 15, 2026</strong>
-            </div>
-        </div>
-        
-        <!-- Save Actions -->
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <button class="btn btn-primary" style="flex: 1;">💾 Save Plan</button>
-            <button class="btn" style="flex: 1;">Preview</button>
-            <button class="btn btn-success" style="flex: 1;">Send to Patient</button>
         </div>
     </div>
 </div>
+
+<style>
+    .plan-editor-layout {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 20px;
+    }
+    
+    @media (max-width: 900px) {
+        .plan-editor-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .exercise-library {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        max-height: 600px;
+        overflow-y: auto;
+    }
+    
+    .exercise-item {
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .exercise-item:hover {
+        border-color: #007bff;
+        background: #f8f9fa;
+    }
+    
+    .exercise-item.selected {
+        border-color: #007bff;
+        background: #e7f1ff;
+    }
+    
+    .config-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+    }
+    
+    @media (max-width: 600px) {
+        .config-row {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .form-group {
+        margin-bottom: 15px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+        color: #333;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+</style>
+
+<script>
+    let selectedExerciseId = null;
+    
+    function selectExercise(element, exerciseId, exerciseName) {
+        // Remove selection from other items
+        document.querySelectorAll('.exercise-item').forEach(item => {
+            item.classList.remove('selected');
+        });
+        
+        // Add selection to clicked item
+        element.classList.add('selected');
+        
+        // Update form
+        selectedExerciseId = exerciseId;
+        document.getElementById('selectedExerciseId').value = exerciseId;
+        document.getElementById('selectedExerciseName').textContent = exerciseName;
+    }
+    
+    function loadPatientPlan() {
+        const patientId = document.getElementById('patientSelect').value;
+        document.getElementById('selectedPatientId').value = patientId;
+        
+        if (patientId) {
+            // Could add AJAX to load patient's current workouts
+            console.log('Loading plan for patient:', patientId);
+        }
+    }
+    
+    function filterExercises() {
+        const search = document.getElementById('exerciseSearch').value.toLowerCase();
+        const category = document.getElementById('categoryFilter').value;
+        
+        document.querySelectorAll('.exercise-item').forEach(item => {
+            const name = item.querySelector('strong').textContent.toLowerCase();
+            const itemCategory = item.dataset.category;
+            
+            const matchesSearch = name.includes(search);
+            const matchesCategory = !category || itemCategory === category;
+            
+            item.style.display = (matchesSearch && matchesCategory) ? 'block' : 'none';
+        });
+    }
+    
+    // Form validation
+    document.getElementById('addExerciseForm').addEventListener('submit', function(e) {
+        const patientId = document.getElementById('selectedPatientId').value;
+        const exerciseId = document.getElementById('selectedExerciseId').value;
+        
+        if (!patientId) {
+            e.preventDefault();
+            alert('Please select a patient first.');
+            return;
+        }
+        
+        if (!exerciseId) {
+            e.preventDefault();
+            alert('Please select an exercise from the library.');
+            return;
+        }
+    });
+</script>
 {% endblock %}

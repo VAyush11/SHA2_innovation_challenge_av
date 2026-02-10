@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign Up - Home Rehab Coach{% endblock %}
+
+{% block content %}
+<div class="login-page">
+    <h1>📝 Create Account</h1>
+    <p class="subtitle">Join Home Rehab Coach</p>
+    
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div style="max-width: 400px; margin: 0 auto 20px;">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}" style="padding: 10px; margin-bottom: 10px; border-radius: 4px; 
+                    {% if category == 'error' %}background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;
+                    {% else %}background: #d4edda; color: #155724; border: 1px solid #c3e6cb;{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    
+    <div class="login-box">
+        <h2>Sign Up</h2>
+        
+        <form method="POST" action="{{ url_for('signup') }}" id="signupForm">
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" name="name" required 
+                       placeholder="Enter your full name" class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" required 
+                       placeholder="Enter your email" class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required 
+                       placeholder="Create a password (min 6 characters)" 
+                       minlength="6" class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label for="role">I am a...</label>
+                <select id="role" name="role" required class="form-control" onchange="togglePatientFields()">
+                    <option value="">Select your role</option>
+                    <option value="patient">Patient</option>
+                    <option value="doctor">Doctor / Clinician</option>
+                    <option value="caregiver">Caregiver / Family Member</option>
+                </select>
+            </div>
+            
+            <!-- Patient-specific fields (hidden by default) -->
+            <div id="patientFields" style="display: none;">
+                <div class="form-group">
+                    <label for="condition">Medical Condition</label>
+                    <select id="condition" name="condition" class="form-control">
+                        <option value="General Rehab">General Rehabilitation</option>
+                        <option value="Knee Replacement">Knee Replacement Recovery</option>
+                        <option value="Hip Replacement">Hip Replacement Recovery</option>
+                        <option value="ACL Reconstruction">ACL Reconstruction</option>
+                        <option value="Shoulder Surgery">Shoulder Surgery Recovery</option>
+                        <option value="Back Pain">Back Pain / Spinal</option>
+                        <option value="Stroke Recovery">Stroke Recovery</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="doctor_id">Select Your Doctor (Optional)</label>
+                    <select id="doctor_id" name="doctor_id" class="form-control">
+                        <option value="">-- Auto-assign a doctor --</option>
+                        {% if doctors %}
+                            {% for doctor in doctors %}
+                                <option value="{{ doctor['id'] }}">Dr. {{ doctor['name'] }}</option>
+                            {% endfor %}
+                        {% endif %}
+                    </select>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-large" style="width: 100%;">
+                Create Account
+            </button>
+        </form>
+        
+        <div style="text-align: center; margin-top: 20px;">
+            <p style="color: #666;">Already have an account?</p>
+            <a href="{{ url_for('login') }}" class="btn" style="margin-top: 10px;">
+                🔐 Login Instead
+            </a>
+        </div>
+        
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="{{ url_for('landing') }}" style="color: #666;">← Back to Home</a>
+        </div>
+    </div>
+</div>
+
+<script>
+function togglePatientFields() {
+    const role = document.getElementById('role').value;
+    const patientFields = document.getElementById('patientFields');
+    
+    if (role === 'patient') {
+        patientFields.style.display = 'block';
+    } else {
+        patientFields.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

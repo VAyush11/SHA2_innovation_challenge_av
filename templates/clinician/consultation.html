@@ -13,145 +13,236 @@
 {% endblock %}
 
 {% block content %}
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }}" style="padding: 10px; margin-bottom: 20px; border-radius: 4px; 
+                {% if category == 'error' %}background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;
+                {% else %}background: #d4edda; color: #155724; border: 1px solid #c3e6cb;{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
 <div class="consultation-layout">
     <!-- Left Column: Scheduling & Appointments -->
     <div>
         <!-- Book New Consultation -->
         <div class="card">
-            <div class="card-header">Book Video Consultation</div>
-            <div class="form-group">
-                <label>Select Patient</label>
-                <select class="form-control">
-                    <option>John Smith (PT-001)</option>
-                    <option>Maria Garcia (PT-002)</option>
-                    <option>Robert Johnson (PT-003)</option>
-                    <option>Emily Chen (PT-004)</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Date</label>
-                <input type="date" class="form-control" value="2026-02-10">
-            </div>
-            <div class="form-group">
-                <label>Time</label>
-                <select class="form-control">
-                    <option>9:00 AM</option>
-                    <option>10:00 AM</option>
-                    <option selected>11:00 AM</option>
-                    <option>2:00 PM</option>
-                    <option>3:00 PM</option>
-                    <option>4:00 PM</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Duration</label>
-                <select class="form-control">
-                    <option>15 minutes</option>
-                    <option selected>30 minutes</option>
-                    <option>45 minutes</option>
-                    <option>60 minutes</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Notes (Optional)</label>
-                <textarea class="form-control" rows="2" placeholder="Reason for consultation..."></textarea>
-            </div>
-            <button class="btn btn-primary" style="width: 100%;">Schedule Consultation</button>
+            <div class="card-header">📹 Book Video Consultation</div>
+            <form method="POST" action="{{ url_for('consultation') }}">
+                <div class="form-group">
+                    <label>Select Patient</label>
+                    <select name="patient_id" class="form-control" required>
+                        <option value="">-- Select a Patient --</option>
+                        {% for patient in patients %}
+                        <option value="{{ patient.id }}">{{ patient.name }} - {{ patient.condition or 'General Rehab' }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" name="appointment_date" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Time</label>
+                    <select name="appointment_time" class="form-control" required>
+                        <option value="09:00">9:00 AM</option>
+                        <option value="09:30">9:30 AM</option>
+                        <option value="10:00">10:00 AM</option>
+                        <option value="10:30">10:30 AM</option>
+                        <option value="11:00" selected>11:00 AM</option>
+                        <option value="11:30">11:30 AM</option>
+                        <option value="12:00">12:00 PM</option>
+                        <option value="14:00">2:00 PM</option>
+                        <option value="14:30">2:30 PM</option>
+                        <option value="15:00">3:00 PM</option>
+                        <option value="15:30">3:30 PM</option>
+                        <option value="16:00">4:00 PM</option>
+                        <option value="16:30">4:30 PM</option>
+                        <option value="17:00">5:00 PM</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Duration</label>
+                    <select name="duration" class="form-control">
+                        <option value="15">15 minutes</option>
+                        <option value="30" selected>30 minutes</option>
+                        <option value="45">45 minutes</option>
+                        <option value="60">60 minutes</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Notes (Optional)</label>
+                    <textarea name="notes" class="form-control" rows="2" placeholder="Reason for consultation..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    📅 Schedule Consultation
+                </button>
+            </form>
         </div>
         
         <!-- Upcoming Appointments -->
         <div class="appointment-list" style="margin-top: 20px;">
-            <div class="card-header">Upcoming Appointments</div>
+            <div class="card-header">📋 Upcoming Appointments ({{ appointments|length if appointments else 0 }})</div>
             
-            <div class="appointment-item">
-                <div>
-                    <strong>John Smith</strong>
-                    <p style="font-size: 0.85rem; color: #666;">Feb 8, 2026 - 10:00 AM (30 min)</p>
+            {% if appointments %}
+                {% for apt in appointments %}
+                <div class="appointment-item" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <strong style="font-size: 1.1rem;">{{ apt.patient_name }}</strong>
+                            {% if apt.condition %}
+                            <span style="background: #e3f2fd; color: #1976d2; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-left: 8px;">
+                                {{ apt.condition }}
+                            </span>
+                            {% endif %}
+                            <p style="font-size: 0.85rem; color: #666; margin: 5px 0 0 0;">
+                                📅 {{ apt.appointment_date }} at {{ apt.appointment_time }} ({{ apt.duration }} min)
+                            </p>
+                            {% if apt.notes %}
+                            <p style="font-size: 0.8rem; color: #888; margin: 3px 0 0 0; font-style: italic;">
+                                {{ apt.notes }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <a href="{{ url_for('video_call', appointment_id=apt.id) }}" class="btn btn-success" style="padding: 8px 16px;">
+                                🎥 Join Call
+                            </a>
+                            <form action="{{ url_for('cancel_appointment', appointment_id=apt.id) }}" method="POST" style="margin: 0;">
+                                <button type="submit" class="btn" style="padding: 8px 16px;" onclick="return confirm('Cancel this appointment?')">
+                                    ✕ Cancel
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
-                <div style="display: flex; gap: 10px;">
-                    <button class="btn btn-success" style="padding: 5px 15px;">Join</button>
-                    <button class="btn" style="padding: 5px 15px;">Reschedule</button>
-                </div>
+                {% endfor %}
+            {% else %}
+            <div style="background: white; padding: 30px; border-radius: 8px; text-align: center; color: #666;">
+                <p style="font-size: 1.1rem;">No upcoming appointments</p>
+                <p style="font-size: 0.9rem;">Schedule a consultation using the form above.</p>
             </div>
-            
-            <div class="appointment-item">
-                <div>
-                    <strong>Maria Garcia</strong>
-                    <p style="font-size: 0.85rem; color: #666;">Feb 9, 2026 - 2:00 PM (30 min)</p>
-                </div>
-                <div style="display: flex; gap: 10px;">
-                    <button class="btn" style="padding: 5px 15px;">Join</button>
-                    <button class="btn" style="padding: 5px 15px;">Reschedule</button>
-                </div>
-            </div>
-            
-            <div class="appointment-item">
-                <div>
-                    <strong>Emily Chen</strong>
-                    <p style="font-size: 0.85rem; color: #666;">Feb 12, 2026 - 11:00 AM (15 min)</p>
-                </div>
-                <div style="display: flex; gap: 10px;">
-                    <button class="btn" style="padding: 5px 15px;">Join</button>
-                    <button class="btn" style="padding: 5px 15px;">Reschedule</button>
-                </div>
-            </div>
+            {% endif %}
         </div>
     </div>
     
-    <!-- Right Column: Video Call Preview -->
+    <!-- Right Column: Quick Actions & Info -->
     <div>
+        <!-- Quick Call Card -->
         <div class="card">
-            <div class="card-header">Video Call Interface</div>
-            
-            <!-- Main Video Area -->
-            <div class="video-call-preview">
-                <div style="text-align: center;">
-                    <div style="font-size: 4rem;">📹</div>
-                    <p>Video Call Preview</p>
-                    <p style="font-size: 0.8rem; opacity: 0.7;">Join a scheduled call to start</p>
-                </div>
+            <div class="card-header">⚡ Quick Video Call</div>
+            <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">
+                Start an instant video call with a patient without scheduling.
+            </p>
+            <div class="form-group">
+                <label>Select Patient</label>
+                <select id="quickCallPatient" class="form-control">
+                    <option value="">-- Select Patient --</option>
+                    {% for patient in patients %}
+                    <option value="{{ patient.id }}">{{ patient.name }}</option>
+                    {% endfor %}
+                </select>
             </div>
-            
-            <!-- Self View (Picture-in-Picture) -->
-            <div style="display: flex; gap: 15px; margin-top: 15px;">
-                <div style="flex: 1; background: #333; border-radius: 4px; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.8rem;">
-                    [ Your Camera ]
-                </div>
-                <div style="flex: 1; background: #333; border-radius: 4px; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.8rem;">
-                    [ Screen Share ]
-                </div>
-            </div>
-            
-            <!-- Call Controls -->
-            <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px;">
-                <button class="btn" style="border-radius: 50%; width: 50px; height: 50px; padding: 0;">🎤</button>
-                <button class="btn" style="border-radius: 50%; width: 50px; height: 50px; padding: 0;">📹</button>
-                <button class="btn" style="border-radius: 50%; width: 50px; height: 50px; padding: 0;">🖥️</button>
-                <button class="btn btn-danger" style="border-radius: 50%; width: 50px; height: 50px; padding: 0;">📞</button>
-            </div>
+            <button onclick="startQuickCall()" class="btn btn-success" style="width: 100%;">
+                🎥 Start Instant Call
+            </button>
         </div>
         
-        <!-- Quick Patient Info During Call -->
+        <!-- Video Call Tips -->
         <div class="card" style="margin-top: 20px;">
-            <div class="card-header">Patient Quick View</div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span>Current Adherence:</span>
-                <strong>45%</strong>
+            <div class="card-header">💡 Video Call Tips</div>
+            <ul style="padding-left: 20px; color: #666; font-size: 0.9rem; line-height: 1.8;">
+                <li>Ensure good lighting and a quiet environment</li>
+                <li>Test your camera and microphone before the call</li>
+                <li>Have the patient's records ready for reference</li>
+                <li>Video calls use <strong>Jitsi Meet</strong> - free & secure</li>
+                <li>Both participants need to click "Join Call" to connect</li>
+            </ul>
+        </div>
+        
+        <!-- Schedule Summary -->
+        <div class="card" style="margin-top: 20px;">
+            <div class="card-header">📊 Schedule Summary</div>
+            <div style="text-align: center; padding: 20px;">
+                <div style="font-size: 3rem; font-weight: bold; color: #007bff;">{{ appointments|length if appointments else 0 }}</div>
+                <div style="color: #666;">Total Appointments</div>
             </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span>Last Pain Report:</span>
-                <strong>4/10</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span>Avg. Quality Score:</span>
-                <strong>68</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between;">
-                <span>Sessions This Week:</span>
-                <strong>3/7</strong>
-            </div>
-            <a href="{{ url_for('patient_detail', patient_id='PT-001') }}" class="btn" style="width: 100%; margin-top: 15px; text-align: center;">View Full Profile</a>
         </div>
     </div>
 </div>
+
+<style>
+    .consultation-layout {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 20px;
+    }
+    
+    @media (max-width: 900px) {
+        .consultation-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .form-group {
+        margin-bottom: 15px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+        color: #333;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+    }
+    
+    .btn-success {
+        background: #28a745;
+        color: white;
+    }
+    
+    .btn-success:hover {
+        background: #218838;
+    }
+</style>
+
+<script>
+    function startQuickCall() {
+        const patientId = document.getElementById('quickCallPatient').value;
+        if (!patientId) {
+            alert('Please select a patient first.');
+            return;
+        }
+        window.location.href = `/video-call/quick/${patientId}`;
+    }
+    
+    // Set minimum date to today
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateInput = document.querySelector('input[name="appointment_date"]');
+        if (dateInput) {
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.setAttribute('min', today);
+            if (!dateInput.value) {
+                dateInput.value = today;
+            }
+        }
+    });
+</script>
 {% endblock %}

@@ -9,7 +9,7 @@
         <a href="{{ url_for('clinician_dashboard') }}">Patients</a>
         <a href="{{ url_for('plan_editor') }}">Plan Editor</a>
         <a href="{{ url_for('consultation') }}">Consultations</a>
-        <a href="{{ url_for('landing') }}">Logout</a>
+        <a href="{{ url_for('logout') }}">Logout</a>
     </nav>
 </header>
 {% endblock %}
@@ -17,123 +17,154 @@
 {% block content %}
 <div class="dashboard-header">
     <h2>Patient Overview</h2>
-    <span>Total Patients: 24</span>
+    <span>Welcome, Dr. {{ session.get('user_name', 'Doctor') }}</span>
 </div>
 
 <!-- Quick Stats -->
 <div class="stats-row">
     <div class="stat-box">
-        <div class="stat-value">24</div>
+        <div class="stat-value">{{ total_patients }}</div>
         <div class="stat-label">Total Patients</div>
     </div>
     <div class="stat-box" style="border: 2px solid #dc3545;">
-        <div class="stat-value" style="color: #dc3545;">5</div>
+        <div class="stat-value" style="color: #dc3545;">{{ needs_attention }}</div>
         <div class="stat-label">Needs Attention</div>
     </div>
     <div class="stat-box">
-        <div class="stat-value">78%</div>
+        <div class="stat-value">{{ avg_adherence }}%</div>
         <div class="stat-label">Avg. Adherence</div>
     </div>
     <div class="stat-box">
-        <div class="stat-value">3</div>
+        <div class="stat-value">{{ upcoming_appointments }}</div>
         <div class="stat-label">Upcoming Calls</div>
     </div>
 </div>
 
+<!-- Quick Actions -->
+<div style="display: flex; gap: 15px; margin-bottom: 20px;">
+    <a href="{{ url_for('consultation') }}" class="btn" style="background: #17a2b8;">📹 Schedule Video Call</a>
+    <a href="{{ url_for('plan_editor') }}" class="btn" style="background: #28a745;">📝 Create Rehab Plan</a>
+</div>
+
 <!-- Filter Bar -->
 <div class="filter-bar">
-    <button class="filter-btn active">All Patients</button>
-    <button class="filter-btn" style="background: #f8d7da; border-color: #dc3545; color: #721c24;">⚠️ Needs Attention (5)</button>
-    <button class="filter-btn">Low Adherence</button>
-    <button class="filter-btn">Pain Spikes</button>
-    <button class="filter-btn">Recent Activity</button>
+    <button class="filter-btn active">All Patients ({{ total_patients }})</button>
+    <button class="filter-btn" style="background: #f8d7da; border-color: #dc3545; color: #721c24;">⚠️ Needs Attention ({{ needs_attention }})</button>
 </div>
 
 <!-- Patient List -->
 <div class="patient-list">
-    <!-- Patient with High Risk -->
-    <div class="patient-item">
-        <div class="patient-info">
-            <h4>John Smith</h4>
-            <span class="meta">ID: PT-001 | Knee Replacement | Week 3</span>
+    {% if patients %}
+        {% for patient in patients %}
+        <div class="patient-item">
+            <div class="patient-info">
+                <h4>{{ patient.name }}</h4>
+                <span class="meta">ID: #{{ patient.id }} | {{ patient.condition or 'General Rehab' }} | Week {{ patient.current_week or 1 }}</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                {% if patient.adherence_rate < 50 %}
+                    <span class="risk-flag high">⚠️ Low Adherence</span>
+                {% elif patient.avg_pain_level and patient.avg_pain_level > 6 %}
+                    <span class="risk-flag medium">⚠️ Pain Spike</span>
+                {% elif patient.avg_quality_score and patient.avg_quality_score < 60 %}
+                    <span class="risk-flag medium">⚠️ Form Quality Low</span>
+                {% else %}
+                    <span class="risk-flag low">✓ On Track</span>
+                {% endif %}
+                <span style="color: #666;">{{ patient.adherence_rate or 0 }}% adherence</span>
+                <a href="{{ url_for('patient_detail', patient_id=patient.id) }}" class="btn">View Details</a>
+            </div>
         </div>
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <span class="risk-flag high">⚠️ Low Adherence</span>
-            <span style="color: #666;">45% adherence</span>
-            <a href="{{ url_for('patient_detail', patient_id='PT-001') }}" class="btn">View Details</a>
+        {% endfor %}
+    {% else %}
+        <div class="patient-item" style="text-align: center; padding: 40px;">
+            <h4>No patients assigned yet</h4>
+            <p style="color: #666;">When patients register and select you as their doctor, they will appear here.</p>
         </div>
-    </div>
-    
-    <!-- Patient with Medium Risk -->
-    <div class="patient-item">
-        <div class="patient-info">
-            <h4>Maria Garcia</h4>
-            <span class="meta">ID: PT-002 | Hip Surgery | Week 5</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <span class="risk-flag medium">⚠️ Pain Spike</span>
-            <span style="color: #666;">Pain: 7/10 today</span>
-            <a href="{{ url_for('patient_detail', patient_id='PT-002') }}" class="btn">View Details</a>
-        </div>
-    </div>
-    
-    <!-- Patient with High Risk -->
-    <div class="patient-item">
-        <div class="patient-info">
-            <h4>Robert Johnson</h4>
-            <span class="meta">ID: PT-003 | ACL Reconstruction | Week 2</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <span class="risk-flag high">⚠️ 3 Missed Sessions</span>
-            <span style="color: #666;">Last active: 3 days ago</span>
-            <a href="{{ url_for('patient_detail', patient_id='PT-003') }}" class="btn">View Details</a>
-        </div>
-    </div>
-    
-    <!-- Normal Patient -->
-    <div class="patient-item">
-        <div class="patient-info">
-            <h4>Emily Chen</h4>
-            <span class="meta">ID: PT-004 | Shoulder Rehab | Week 4</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <span class="risk-flag low">✓ On Track</span>
-            <span style="color: #666;">92% adherence</span>
-            <a href="{{ url_for('patient_detail', patient_id='PT-004') }}" class="btn">View Details</a>
-        </div>
-    </div>
-    
-    <!-- Normal Patient -->
-    <div class="patient-item">
-        <div class="patient-info">
-            <h4>Michael Brown</h4>
-            <span class="meta">ID: PT-005 | Back Pain Therapy | Week 6</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <span class="risk-flag low">✓ On Track</span>
-            <span style="color: #666;">88% adherence</span>
-            <a href="{{ url_for('patient_detail', patient_id='PT-005') }}" class="btn">View Details</a>
-        </div>
-    </div>
-    
-    <!-- Medium Risk Patient -->
-    <div class="patient-item">
-        <div class="patient-info">
-            <h4>Sarah Wilson</h4>
-            <span class="meta">ID: PT-006 | Ankle Sprain | Week 1</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <span class="risk-flag medium">⚠️ Form Quality Low</span>
-            <span style="color: #666;">Avg score: 52</span>
-            <a href="{{ url_for('patient_detail', patient_id='PT-006') }}" class="btn">View Details</a>
-        </div>
-    </div>
+    {% endif %}
 </div>
 
-<!-- Pagination -->
-<div style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;">
-    <button class="btn">← Previous</button>
-    <span style="padding: 12px;">Page 1 of 4</span>
-    <button class="btn">Next →</button>
-</div>
+<style>
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+.stat-box {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #007bff;
+}
+.stat-label {
+    color: #666;
+    font-size: 0.9rem;
+}
+.filter-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+.filter-btn {
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background: white;
+    cursor: pointer;
+}
+.filter-btn.active {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+.patient-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.patient-item {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.patient-info h4 {
+    margin: 0 0 5px 0;
+}
+.patient-info .meta {
+    color: #666;
+    font-size: 0.9rem;
+}
+.risk-flag {
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.85rem;
+    font-weight: bold;
+}
+.risk-flag.high {
+    background: #f8d7da;
+    color: #721c24;
+}
+.risk-flag.medium {
+    background: #fff3cd;
+    color: #856404;
+}
+.risk-flag.low {
+    background: #d4edda;
+    color: #155724;
+}
+</style>
 {% endblock %}
