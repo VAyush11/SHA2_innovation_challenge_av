@@ -18,9 +18,7 @@
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
         {% for category, message in messages %}
-            <div class="alert alert-{{ category }}" style="padding: 10px; margin-bottom: 20px; border-radius: 4px;
-                {% if category == 'error' %}background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;
-                {% else %}background: #d4edda; color: #155724; border: 1px solid #c3e6cb;{% endif %}">
+            <div class="alert alert-{{ category }} {% if category == 'error' %}alert-error{% else %}alert-success{% endif %}">
                 {{ message }}
             </div>
         {% endfor %}
@@ -28,22 +26,6 @@
 {% endwith %}
 
 <div class="appointments-container">
-<<<<<<< Updated upstream
-    <!-- Smart Scheduling Section -->
-    <div class="card" style="margin-bottom: 20px;">
-        <div class="card-header">🎯 Smart Scheduling - Recommended Appointments</div>
-        <div class="booking-intro">
-            <p style="color: #666; font-size: 0.95rem; margin-bottom: 15px;">
-                Based on your progress and availability, here are the best appointment options for you:
-            </p>
-        </div>
-
-        <button id="btn-get-recommendations" class="btn btn-primary" style="width: 100%; margin-bottom: 15px;">
-            Get My Best Appointment Options
-        </button>
-
-        <p id="loading-text" style="display: none; text-align: center; color: #666; margin: 10px 0;">
-=======
     <!-- Smart Scheduling: Optimized Doctor Recommendations -->
     <div class="card" style="margin-bottom: 20px; border: 2px solid #007bff;">
         <div class="card-header" style="background: linear-gradient(135deg, #e3f2fd, #bbdefb); color: #1565c0;">
@@ -56,47 +38,24 @@
             Get My Best Appointment Options
         </button>
         <p id="loading-text" style="display: none; text-align: center; color: #666;">
->>>>>>> Stashed changes
             Finding the best appointments for you...
         </p>
 
         <!-- Notification Banner -->
-<<<<<<< Updated upstream
-        <div id="notification-banner" style="display: none; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-            <strong id="notif-level"></strong>
-            <span id="notif-message"></span>
-        </div>
-=======
         <div id="notification-banner" style="display: none; padding: 15px; border-radius: 8px; margin-bottom: 15px;"></div>
->>>>>>> Stashed changes
 
         <!-- Recommendations List -->
         <div id="recommendations-panel" style="display: none;">
             <div style="background: #e3f2fd; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
-<<<<<<< Updated upstream
-                <strong style="color: #1565c0;">📋 Top 3 Recommendations</strong>
-                <p style="font-size: 0.9rem; color: #666; margin: 5px 0 0 0;">
-                    Click "Book" on any option to schedule your appointment
-=======
                 <strong style="color: #1565c0;">Top 3 Recommendations</strong>
                 <p style="font-size: 0.9rem; color: #666; margin: 5px 0 0 0;">
                     Click "Book" on any option to auto-fill the booking form below
->>>>>>> Stashed changes
                 </p>
             </div>
             <div id="recommendations-list"></div>
         </div>
     </div>
 
-<<<<<<< Updated upstream
-    <!-- Book Appointment Form -->
-    <div id="booking-form-card" class="card" style="margin-bottom: 20px;">
-        <div class="card-header">📝 Book Your Appointment</div>
-        <form method="POST" action="{{ url_for('patient_book_appointment') }}">
-            <div class="form-group">
-                <label>Doctor</label>
-                <input type="text" id="book-doctor" name="doctor_name" class="form-control" readonly required>
-=======
     <!-- Book Appointment Form (auto-filled by recommendations) -->
     <div id="booking-form-card" class="card" style="margin-bottom: 20px;">
         <div class="card-header">Book Your Appointment</div>
@@ -104,7 +63,6 @@
             <div class="form-group">
                 <label>Doctor</label>
                 <input type="text" id="book-doctor" name="doctor_name" class="form-control" placeholder="Select a recommendation above" readonly required>
->>>>>>> Stashed changes
             </div>
             <div class="form-group">
                 <label>Date</label>
@@ -144,11 +102,7 @@
                 <textarea name="notes" class="form-control" rows="2" placeholder="What would you like to discuss?"></textarea>
             </div>
             <button type="submit" class="btn btn-primary" style="width: 100%;">
-<<<<<<< Updated upstream
-                📅 Request Appointment
-=======
                 Request Appointment
->>>>>>> Stashed changes
             </button>
             <p style="font-size: 0.85rem; color: #666; text-align: center; margin-top: 10px;">
                 Your doctor will confirm the appointment
@@ -243,7 +197,6 @@
 <style>
     .appointments-container {
         max-width: 900px;
-<<<<<<< Updated upstream
         margin: 0 auto;
     }
 
@@ -251,106 +204,6 @@
         margin-bottom: 15px;
     }
 
-    .form-group label {
-        display: block;
-        margin-bottom: 5px;
-        font-weight: 500;
-        color: #333;
-    }
-
-    .form-control {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 1rem;
-    }
-
-    .form-control:focus {
-        outline: none;
-        border-color: #007bff;
-        box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
-    }
-
-    .recommendation-item {
-        background: white;
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 10px;
-        border: 1px solid #ddd;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        transition: all 0.2s;
-    }
-
-    .recommendation-item:hover {
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        transform: translateY(-2px);
-    }
-
-    .recommendation-info {
-        flex: 1;
-    }
-
-    .recommendation-info strong {
-        font-size: 1.1rem;
-        color: #333;
-    }
-
-    .recommendation-info p {
-        font-size: 0.9rem;
-        color: #666;
-        margin: 5px 0 0 0;
-    }
-
-    .recommendation-actions {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-    }
-
-    .score-badge {
-        background: #e3f2fd;
-        color: #1565c0;
-        padding: 8px 15px;
-        border-radius: 20px;
-        font-weight: 600;
-        font-size: 0.9rem;
-    }
-
-    #notification-banner {
-        border-left: 4px solid #ff9800;
-    }
-
-    #notification-banner.critical {
-        background: #fff3e0;
-        border-left-color: #f44336;
-    }
-
-    #notification-banner.critical #notif-level {
-        color: #d32f2f;
-    }
-
-    #notification-banner.concerning {
-        background: #fff9e6;
-        border-left-color: #ff9800;
-    }
-
-    #notification-banner.concerning #notif-level {
-        color: #f57c00;
-    }
-
-    .appointments-container {
-        max-width: 900px;
-=======
->>>>>>> Stashed changes
-        margin: 0 auto;
-    }
-
-    .form-group {
-        margin-bottom: 15px;
-    }
     .form-group label {
         display: block;
         margin-bottom: 5px;
@@ -552,6 +405,17 @@
         color: #721c24;
     }
     
+    .alert-error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    .alert-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
     @media (max-width: 600px) {
         .appointment-card {
             flex-direction: column;
@@ -570,7 +434,6 @@
 </style>
 
 <script>
-<<<<<<< Updated upstream
     // DOM references
     const btnGetRecs = document.getElementById('btn-get-recommendations');
     const loadingText = document.getElementById('loading-text');
@@ -582,16 +445,6 @@
     const bookingFormCard = document.getElementById('booking-form-card');
 
     // Fetch and display recommendations
-=======
-    var btnGetRecs = document.getElementById('btn-get-recommendations');
-    var loadingText = document.getElementById('loading-text');
-    var notifBanner = document.getElementById('notification-banner');
-    var recsPanel = document.getElementById('recommendations-panel');
-    var recsList = document.getElementById('recommendations-list');
-    var bookingFormCard = document.getElementById('booking-form-card');
-
-    // Fetch recommendations
->>>>>>> Stashed changes
     btnGetRecs.addEventListener('click', function() {
         loadingText.style.display = 'block';
         btnGetRecs.disabled = true;
@@ -599,29 +452,18 @@
         recsPanel.style.display = 'none';
 
         fetch('/api/patient/recommendations')
-<<<<<<< Updated upstream
             .then(response => response.json())
             .then(data => {
-                loadingText.style.display = 'none';
-
-                if (data.error) {
-                    alert('Error: ' + data.error);
-                    btnGetRecs.disabled = false;
-=======
-            .then(function(response) { return response.json(); })
-            .then(function(data) {
                 loadingText.style.display = 'none';
                 btnGetRecs.disabled = false;
 
                 if (data.error) {
                     alert('Error: ' + data.error);
->>>>>>> Stashed changes
                     return;
                 }
 
                 // Show notification if present
                 if (data.notification) {
-<<<<<<< Updated upstream
                     const notif = data.notification;
                     notifLevel.textContent = notif.level === 'critical' ? 'CRITICAL: ' : 'NOTICE: ';
                     notifMessage.textContent = notif.message;
@@ -675,62 +517,11 @@
 
         // Visual feedback
         document.querySelectorAll('.recommendation-item').forEach(item => {
-=======
-                    var notif = data.notification;
-                    var lvl = notif.level === 'critical' ? 'CRITICAL' : 'NOTICE';
-                    var bg = notif.level === 'critical'
-                        ? 'background: #fff3e0; border-left: 4px solid #f44336; color: #d32f2f;'
-                        : 'background: #fff9e6; border-left: 4px solid #ff9800; color: #f57c00;';
-                    notifBanner.setAttribute('style', 'display: block; padding: 15px; border-radius: 8px; margin-bottom: 15px; ' + bg);
-                    notifBanner.innerHTML = '<strong>' + lvl + ': </strong>' + notif.message;
-                }
-
-                // Display recommendations
-                var recs = data.recommendations || [];
-                if (recs.length === 0) {
-                    recsList.innerHTML = '<p style="color: #666; padding: 15px; text-align: center;">No appointments available at this time.</p>';
-                } else {
-                    var html = '';
-                    recs.forEach(function(rec) {
-                        html += '<div class="recommendation-item">';
-                        html += '  <div style="flex: 1;">';
-                        html += '    <strong style="font-size: 1.1rem;">#' + rec.rank + ' - ' + rec.doctor_label + '</strong>';
-                        html += '    <p style="font-size: 0.9rem; color: #666; margin: 5px 0 0 0;">' + rec.timeslot_label + ' | ' + rec.dist_km + ' km away</p>';
-                        html += '  </div>';
-                        html += '  <div style="display: flex; align-items: center; gap: 12px;">';
-                        html += '    <span class="score-badge">Score: ' + rec.score.toFixed(2) + '</span>';
-                        html += '    <button class="btn btn-success" style="padding: 8px 20px;"';
-                        html += '      data-doctor="' + rec.doctor_label + '"';
-                        html += '      data-timeslot="' + rec.timeslot_label + '"';
-                        html += '      onclick="bookRecommendation(this)">Book</button>';
-                        html += '  </div>';
-                        html += '</div>';
-                    });
-                    recsList.innerHTML = html;
-                }
-                recsPanel.style.display = 'block';
-            })
-            .catch(function(err) {
-                loadingText.style.display = 'none';
-                btnGetRecs.disabled = false;
-                alert('Failed to load recommendations. Please try again.');
-            });
-    });
-
-    // Auto-fill booking form from recommendation
-    function bookRecommendation(btn) {
-        var doctorLabel = btn.getAttribute('data-doctor');
-        var timeslotLabel = btn.getAttribute('data-timeslot');
-
-        // Highlight selected
-        document.querySelectorAll('.recommendation-item').forEach(function(item) {
->>>>>>> Stashed changes
             item.style.border = '1px solid #ddd';
         });
         btn.closest('.recommendation-item').style.border = '2px solid #28a745';
 
         // Parse timeslot (e.g., "Mon 9:00 AM")
-<<<<<<< Updated upstream
         const match = timeslotLabel.match(/^(\w+)\s+(\d+:\d+)\s*(AM|PM)/i);
         if (match) {
             const dayAbbrev = match[1];
@@ -782,39 +573,6 @@
                 targetDate.setDate(today.getDate() + daysUntilTarget);
 
                 const dateStr = targetDate.getFullYear() + '-' +
-=======
-        var match = timeslotLabel.match(/^(\w+)\s+(\d+:\d+)\s*(AM|PM)/i);
-        if (match) {
-            var dayAbbrev = match[1];
-            var time12hr = match[2];
-            var ampm = match[3].toUpperCase();
-
-            // Convert to 24h
-            var timeParts = time12hr.split(':');
-            var hour = parseInt(timeParts[0]);
-            var minute = timeParts[1];
-            if (ampm === 'PM' && hour !== 12) hour += 12;
-            else if (ampm === 'AM' && hour === 12) hour = 0;
-            var timeStr = hour.toString().padStart(2, '0') + ':' + minute;
-
-            // Calculate date from day of week
-            var dayMap = { 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6, 'Sun': 0 };
-            var targetDay = dayMap[dayAbbrev];
-            if (targetDay !== undefined) {
-                var today = new Date();
-                var currentDay = today.getDay();
-                var daysUntil = targetDay - currentDay;
-                if (daysUntil < 0) daysUntil += 7;
-                else if (daysUntil === 0) {
-                    var now = new Date();
-                    var check = new Date(now);
-                    check.setHours(hour, parseInt(minute), 0, 0);
-                    if (check <= now) daysUntil = 7;
-                }
-                var targetDate = new Date(today);
-                targetDate.setDate(today.getDate() + daysUntil);
-                var dateStr = targetDate.getFullYear() + '-' +
->>>>>>> Stashed changes
                     String(targetDate.getMonth() + 1).padStart(2, '0') + '-' +
                     String(targetDate.getDate()).padStart(2, '0');
 
@@ -822,7 +580,6 @@
                 document.getElementById('book-doctor').value = doctorLabel;
                 document.getElementById('book-date').value = dateStr;
                 document.getElementById('book-time').value = timeStr;
-<<<<<<< Updated upstream
 
                 // Scroll to form
                 bookingFormCard.scrollIntoView({ behavior: 'smooth' });
@@ -835,29 +592,19 @@
                 }, 1000);
             }
         }
-=======
-            }
-        }
 
         // Scroll + flash
         bookingFormCard.scrollIntoView({ behavior: 'smooth' });
         bookingFormCard.style.transition = 'background-color 0.3s';
         bookingFormCard.style.backgroundColor = '#d4edda';
         setTimeout(function() { bookingFormCard.style.backgroundColor = ''; }, 1000);
->>>>>>> Stashed changes
     }
 
     // Set minimum date to today
     document.addEventListener('DOMContentLoaded', function() {
-<<<<<<< Updated upstream
-        const dateInput = document.getElementById('book-date');
-        if (dateInput) {
-            const today = new Date().toISOString().split('T')[0];
-=======
         var dateInput = document.getElementById('book-date');
         if (dateInput) {
             var today = new Date().toISOString().split('T')[0];
->>>>>>> Stashed changes
             dateInput.setAttribute('min', today);
         }
     });

@@ -380,7 +380,6 @@
         btn.closest('.appointment-item').style.border = '2px solid #28a745';
 
         // Parse timeslot label (e.g., "Mon 9:00 AM", "Tue 2:00 PM")
-<<<<<<< Updated upstream
         var dateStr = '';
         var timeStr = '';
 
@@ -390,113 +389,25 @@
             var dayAbbrev = match[1];  // Mon, Tue, Wed, etc.
             var time12hr = match[2];   // 9:00, 2:00, etc.
             var ampm = match[3].toUpperCase();  // AM or PM
-=======
-        var match = timeslotLabel.match(/^(\w+)\s+(\d+:\d+)\s*(AM|PM)/i);
-        if (match) {
-            var dayAbbrev = match[1];
-            var time12hr = match[2];
-            var ampm = match[3].toUpperCase();
->>>>>>> Stashed changes
 
             // Convert time to 24-hour format
             var timeParts = time12hr.split(':');
             var hour = parseInt(timeParts[0]);
             var minute = timeParts[1];
-<<<<<<< Updated upstream
 
             if (ampm === 'PM' && hour !== 12) {
                 hour += 12;
             } else if (ampm === 'AM' && hour === 12) {
                 hour = 0;
             }
-
-            timeStr = hour.toString().padStart(2, '0') + ':' + minute;
-
-            // Calculate the date based on day of week
-            var dayMap = {
-                'Mon': 1, 'Monday': 1,
-                'Tue': 2, 'Tuesday': 2,
-                'Wed': 3, 'Wednesday': 3,
-                'Thu': 4, 'Thursday': 4,
-                'Fri': 5, 'Friday': 5,
-                'Sat': 6, 'Saturday': 6,
-                'Sun': 0, 'Sunday': 0
-            };
-
-=======
-            if (ampm === 'PM' && hour !== 12) hour += 12;
-            else if (ampm === 'AM' && hour === 12) hour = 0;
             var timeStr = hour.toString().padStart(2, '0') + ':' + minute;
 
             // Calculate the next occurrence of this day of week
             var dayMap = { 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6, 'Sun': 0 };
->>>>>>> Stashed changes
             var targetDay = dayMap[dayAbbrev];
             if (targetDay !== undefined) {
                 var today = new Date();
                 var currentDay = today.getDay();
-<<<<<<< Updated upstream
-                var daysUntilTarget = targetDay - currentDay;
-
-                // If the target day has already passed this week, schedule for next week
-                if (daysUntilTarget < 0) {
-                    daysUntilTarget += 7;
-                } else if (daysUntilTarget === 0) {
-                    // If it's today, check if the time has passed
-                    var now = new Date();
-                    var targetTime = new Date(now);
-                    targetTime.setHours(hour, parseInt(minute), 0, 0);
-
-                    if (targetTime <= now) {
-                        daysUntilTarget = 7;  // Schedule for next week
-                    }
-                }
-
-                var targetDate = new Date(today);
-                targetDate.setDate(today.getDate() + daysUntilTarget);
-
-                // Format as YYYY-MM-DD
-                var year = targetDate.getFullYear();
-                var month = String(targetDate.getMonth() + 1).padStart(2, '0');
-                var day = String(targetDate.getDate()).padStart(2, '0');
-                dateStr = year + '-' + month + '-' + day;
-            }
-        }
-
-        // Auto-populate the booking form
-        var bookingPatientSelect = document.getElementById('book-patient-select');
-        var dateInput = document.querySelector('input[name="appointment_date"]');
-        var timeSelect = document.querySelector('select[name="appointment_time"]');
-
-        // Set patient
-        if (bookingPatientSelect && selectedPatientId) {
-            bookingPatientSelect.value = selectedPatientId;
-            // Trigger change event to update any dependent fields
-            var event = new Event('change', { bubbles: true });
-            bookingPatientSelect.dispatchEvent(event);
-        }
-
-        // Set date
-        if (dateInput && dateStr) {
-            dateInput.value = dateStr;
-        }
-
-        // Set time
-        if (timeSelect && timeStr) {
-            timeSelect.value = timeStr;
-        }
-
-        // Scroll to booking form
-        document.getElementById('booking-form-card').scrollIntoView({ behavior: 'smooth' });
-
-        // Flash the form to indicate it's been filled
-        var formCard = document.getElementById('booking-form-card');
-        formCard.style.transition = 'background-color 0.3s';
-        formCard.style.backgroundColor = '#d4edda';
-        setTimeout(function() {
-            formCard.style.backgroundColor = '';
-        }, 1000);
-=======
                 var daysUntil = targetDay - currentDay;
                 if (daysUntil < 0) daysUntil += 7;
                 else if (daysUntil === 0) {
@@ -528,7 +439,6 @@
         formCard.style.transition = 'background-color 0.3s';
         formCard.style.backgroundColor = '#d4edda';
         setTimeout(function() { formCard.style.backgroundColor = ''; }, 1000);
->>>>>>> Stashed changes
     }
 
     // === QUICK CALL ===
