@@ -408,13 +408,18 @@ def patient_appointments():
 @login_required
 @role_required('patient')
 def patient_book_appointment():
+<<<<<<< Updated upstream
     """Patient books an appointment with a doctor"""
+=======
+    """Patient books an appointment with a recommended doctor."""
+>>>>>>> Stashed changes
     doctor_name = request.form.get('doctor_name', '').strip()
     appointment_date = request.form['appointment_date']
     appointment_time = request.form['appointment_time']
     duration = request.form.get('duration', 30)
     notes = request.form.get('notes', '')
 
+<<<<<<< Updated upstream
     # Find doctor by name (looking for "Dr. Smith" format)
     doctor = query_db('''
         SELECT id FROM users
@@ -428,6 +433,19 @@ def patient_book_appointment():
             SELECT id FROM users
             WHERE role = 'doctor' AND name LIKE ?
         ''', (f'%{doctor_name_clean}%',), one=True)
+=======
+    # Find doctor by name
+    doctor = query_db(
+        "SELECT id FROM users WHERE role = 'doctor' AND name LIKE ?",
+        (f'%{doctor_name}%',), one=True
+    )
+    if not doctor:
+        doctor_name_clean = doctor_name.replace('Dr.', '').strip()
+        doctor = query_db(
+            "SELECT id FROM users WHERE role = 'doctor' AND name LIKE ?",
+            (f'%{doctor_name_clean}%',), one=True
+        )
+>>>>>>> Stashed changes
 
     if not doctor:
         flash('Doctor not found. Please try again.', 'error')
@@ -435,22 +453,34 @@ def patient_book_appointment():
 
     doctor_id = doctor['id']
     patient_id = session['user_id']
+<<<<<<< Updated upstream
 
     # Generate unique room ID for video call
     room_id = f"rehab-{doctor_id}-{patient_id}-{uuid.uuid4().hex[:8]}"
 
     # Create appointment
+=======
+    room_id = f"rehab-{doctor_id}-{patient_id}-{uuid.uuid4().hex[:8]}"
+
+>>>>>>> Stashed changes
     try:
         execute_db('''
             INSERT INTO appointments
             (doctor_id, patient_id, appointment_date, appointment_time, duration, notes, room_id, status)
             VALUES (?, ?, ?, ?, ?, ?, ?, 'scheduled')
         ''', (doctor_id, patient_id, appointment_date, appointment_time, duration, notes, room_id))
+<<<<<<< Updated upstream
 
         flash('Appointment request sent successfully! Your doctor will be notified.', 'success')
     except Exception as e:
         flash('Failed to book appointment. Please try again.', 'error')
         print(f'[ERROR] Failed to book appointment: {e}')
+=======
+        flash('Appointment booked successfully! Your doctor will be notified.', 'success')
+    except Exception as e:
+        flash('Failed to book appointment. Please try again.', 'error')
+        print(f'[ERROR] Patient book appointment failed: {e}')
+>>>>>>> Stashed changes
 
     return redirect(url_for('patient_appointments'))
 
@@ -1020,6 +1050,7 @@ def api_patient_recommendations():
     if not OPTIM_AVAILABLE:
         return jsonify({"error": "Optimization module not available"}), 503
 
+<<<<<<< Updated upstream
     # Get the logged-in patient's information
     patient_id = session['user_id']
 
@@ -1050,6 +1081,27 @@ def api_patient_recommendations():
         optim_patient_id = "patient_3"  # Medium score patient
 
     # Get recommendations
+=======
+    patient_id = session['user_id']
+    patient_data = query_db(
+        'SELECT * FROM patients WHERE user_id = ?',
+        (patient_id,), one=True
+    )
+    if not patient_data:
+        return jsonify({"error": "Patient profile not found"}), 404
+
+    patients, doctors, timeslots = build_demo_data()
+
+    # Map patient to demo data based on rehab score
+    rehab_score = patient_data['avg_quality_score']
+    if rehab_score < 4.0:
+        optim_patient_id = "patient_1"
+    elif rehab_score >= 7.0:
+        optim_patient_id = "patient_2"
+    else:
+        optim_patient_id = "patient_3"
+
+>>>>>>> Stashed changes
     recs, notification = get_top3_recommendations(
         patient_id=optim_patient_id,
         patients=patients,
@@ -1059,7 +1111,10 @@ def api_patient_recommendations():
     )
 
     return jsonify({
+<<<<<<< Updated upstream
         "patient_name": patient_data['condition'],
+=======
+>>>>>>> Stashed changes
         "recommendations": recs,
         "notification": notification
     })
