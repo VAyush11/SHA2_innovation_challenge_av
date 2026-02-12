@@ -41,8 +41,11 @@
             Finding the best appointments for you...
         </p>
 
-        <!-- Notification Banner -->
-        <div id="notification-banner" style="display: none; padding: 15px; border-radius: 8px; margin-bottom: 15px;"></div>
+        <!-- Notification Banner (always present for JS) -->
+        <div id="notification-banner" style="display: none; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+            <strong id="notif-level"></strong>
+            <span id="notif-message"></span>
+        </div>
 
         <!-- Recommendations List -->
         <div id="recommendations-panel" style="display: none;">
@@ -457,18 +460,15 @@
                 loadingText.style.display = 'none';
                 btnGetRecs.disabled = false;
 
-                if (data.error) {
-                    alert('Error: ' + data.error);
-                    return;
-                }
-
-                // Show notification if present
+                // Defensive: check notification elements exist
                 if (data.notification) {
                     const notif = data.notification;
-                    notifLevel.textContent = notif.level === 'critical' ? 'CRITICAL: ' : 'NOTICE: ';
-                    notifMessage.textContent = notif.message;
-                    notifBanner.className = notif.level === 'critical' ? 'critical' : 'concerning';
-                    notifBanner.style.display = 'block';
+                    if (notifBanner && notifLevel && notifMessage) {
+                        notifLevel.textContent = notif.level === 'critical' ? 'CRITICAL: ' : 'NOTICE: ';
+                        notifMessage.textContent = notif.message;
+                        notifBanner.className = notif.level === 'critical' ? 'critical' : 'concerning';
+                        notifBanner.style.display = 'block';
+                    }
                 }
 
                 // Display recommendations
